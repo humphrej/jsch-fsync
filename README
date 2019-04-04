@@ -180,7 +180,11 @@ Current release has supported following properties,
   added to the user known host files only after the user has confirmed 
   that is what they really want to do, and jsch will refuse to connect 
   to hosts whose host key has changed.
-
+* fsync@openssh.com: true | false
+  default: false
+  If this property is set to ``true'', then the connection will use 
+  the fsync@openssh.com extension to request an fsync after a sftp put,
+  if the server supports it.
 
 TODO
 ====

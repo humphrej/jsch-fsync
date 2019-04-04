@@ -153,6 +153,7 @@ public class ChannelSftp extends ChannelSession{
   private boolean extension_statvfs = false;
   // private boolean extension_fstatvfs = false;
   private boolean extension_hardlink = false;
+  private boolean extension_fsync = false;
 
 /*
 10. Changes from previous protocol versions
@@ -304,7 +305,12 @@ public class ChannelSftp extends ChannelSession{
       if(extensions.get("hardlink@openssh.com")!=null &&
          extensions.get("hardlink@openssh.com").equals("1")){
         extension_hardlink = true;
-      } 
+      }
+
+      if(extensions.get("fsync@openssh.com")!=null &&
+          extensions.get("fsync@openssh.com").equals("1")){
+        extension_fsync = true;
+      }
 
       lcwd=new File(".").getCanonicalPath();
     }
@@ -689,6 +695,9 @@ public class ChannelSftp extends ChannelSession{
         ackcount++;
       }
       if(monitor!=null)monitor.end();
+
+      if ("true".equals(getSession().getConfig("fsync@openssh.com"))) sendFSYNC(handle);
+
       _sendCLOSE(handle, header);
     }
     catch(Exception e){
@@ -2513,12 +2522,22 @@ public class ChannelSftp extends ChannelSession{
     sendPacketPath((byte)0, handle, "fstatvfs@openssh.com");
   }
   */
+
+  private void sendFSYNC(byte[] handle) throws Exception{
+    if(!extension_fsync){
+      throw new SftpException(SSH_FX_OP_UNSUPPORTED,
+          "fsync@openssh.com is not supported");
+    }
+    sendPacketPath((byte)0, handle, "fsync@openssh.com");
+  }
+
   private void sendLSTAT(byte[] path) throws Exception{
     sendPacketPath(SSH_FXP_LSTAT, path);
   }
   private void sendFSTAT(byte[] handle) throws Exception{
     sendPacketPath(SSH_FXP_FSTAT, handle);
   }
+
   private void sendSETSTAT(byte[] path, SftpATTRS attr) throws Exception{
     packet.reset();
     putHEAD(SSH_FXP_SETSTAT, 9+path.length+attr.length());
